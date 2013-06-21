@@ -1,16 +1,15 @@
-package acs.jpbs.server;
+package acs.jpbs.serverUtils;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import acs.jpbs.serverUtils.StdOutHandler;
 import acs.jpbs.utils.jPBSLogger;
 
-public class jPBSServerEnvironment {
+public class jPBSEnvironment {
 	public static File qstat;
 	
-	private jPBSServerEnvironment() { }
+	private jPBSEnvironment() { }
 	
 	public static boolean initEnv() {
 		String sysPathString = System.getenv("PATH");

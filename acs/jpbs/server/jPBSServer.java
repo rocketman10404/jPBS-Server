@@ -1,8 +1,7 @@
 package acs.jpbs.server;
 
-import java.util.List;
-
-import acs.jpbs.core.PbsServer;
+import acs.jpbs.server.core.PbsServer;
+import acs.jpbs.serverUtils.jPBSEnvironment;
 import acs.jpbs.utils.jPBSLogger;
 
 public class jPBSServer {
@@ -10,8 +9,8 @@ public class jPBSServer {
 	public PbsServer server = null;
 
 	private jPBSServer() {
-		if(jPBSServerEnvironment.initEnv()) {
-			jPBSLogger.logInfo("Environment loaded, 'qstat' utility found at '"+jPBSServerEnvironment.qstat+"'");
+		if(jPBSEnvironment.initEnv()) {
+			jPBSLogger.logInfo("Environment loaded, 'qstat' utility found at '"+jPBSEnvironment.qstat+"'");
 		} else jPBSLogger.logError("Failed to load environment info");
 	}
 	
@@ -26,10 +25,12 @@ public class jPBSServer {
 	
 	public static void main(String args[]) {
 		jPBSServer me = getInstance();
+		me.server = new PbsServer();
 		
-		List<String> test = jPBSServerEnvironment.retrieveQstatOutput(new String[]{"-Bf"});
-		for(String oLine : test) {
-			jPBSLogger.logInfo(oLine);
-		}
+		// Update server in the foreground
+		me.server.updateSelf();
+		me.server.debugPrint();
+		
+		// Update children in the background
 	}
 }
