@@ -3,6 +3,7 @@ package acs.jpbs.server.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import acs.jbps.attrib.PbsResource;
 import acs.jbps.attrib.PbsServerLicenses;
 import acs.jbps.attrib.PbsStateCount;
 import acs.jbps.enums.PbsServerState;
@@ -11,10 +12,15 @@ import acs.jpbs.serverUtils.jPBSEnvironment;
 
 public class PbsServer extends acs.jpbs.core.PbsServer implements IPbsObject {
 
-	private void parseQstatData(List<String> rawData) {
+	public void getChildren() {
+		// get queue list output, pass to update children
+		this.updateChildren(jPBSEnvironment.retrieveQmgrOutput(new String[]{"'list queue @hn1'"}));
+	}
+	
+	public void parseQstatData(List<String> rawData) {
 		String[] rawArr;
-		List<String> rawResourcesAssigned = new ArrayList<String>();
-		List<String> rawDefaultChunk = new ArrayList<String>();
+		List<String[]> rawResourcesAssigned = new ArrayList<String[]>();
+		List<String[]> rawDefaultChunk = new ArrayList<String[]>();
 		
 		for(String rawLine : rawData) {
 			rawArr = rawLine.split("=");
@@ -34,14 +40,22 @@ public class PbsServer extends acs.jpbs.core.PbsServer implements IPbsObject {
 			else if(rawArr[0].equals("resv_enable")) this.resvEnable = Boolean.parseBoolean(rawArr[1].trim());
 			else if(rawArr[0].equals("license_count")) this.licenseCount = PbsServerLicenses.parseServerLicenses(rawArr[1].trim());
 			else if(rawArr[0].equals("pbs_version")) this.version = rawArr[1].trim();
-			else if(rawArr[0].startsWith("default_chunk")) rawDefaultChunk.add(rawLine);
-			else if(rawArr[0].startsWith("resources_assigned")) rawResourcesAssigned.add(rawLine);
+			else if(rawArr[0].startsWith("default_chunk")) rawDefaultChunk.add(rawArr);
+			else if(rawArr[0].startsWith("resources_assigned")) rawResourcesAssigned.add(rawArr);
 		}
+		
+		this.defaultChunk = PbsResource.processResource(rawDefaultChunk);
+		this.resourcesAssigned = PbsResource.processResource(rawResourcesAssigned);
 	}
 	
 	public void updateSelf() {
 		this.parseQstatData(jPBSEnvironment.retrieveQstatOutput(new String[]{"-Bf"}));
 	}
 	
-	public void updateChildren() { }
+	public void updateChildren(List<String> rawData) { 
+		// search through data for queues, spawn updater threads for each
+		for(String queues : rawData) {
+			System.out.println("[QINFO] '"+queues+"'");
+		}
+	}
 }

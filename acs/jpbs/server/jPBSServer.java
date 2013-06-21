@@ -2,6 +2,7 @@ package acs.jpbs.server;
 
 import acs.jpbs.server.core.PbsServer;
 import acs.jpbs.serverUtils.jPBSEnvironment;
+import acs.jpbs.serverUtils.jPBSUpdater;
 import acs.jpbs.utils.jPBSLogger;
 
 public class jPBSServer {
@@ -11,6 +12,7 @@ public class jPBSServer {
 	private jPBSServer() {
 		if(jPBSEnvironment.initEnv()) {
 			jPBSLogger.logInfo("Environment loaded, 'qstat' utility found at '"+jPBSEnvironment.qstat+"'");
+			jPBSLogger.logInfo("'qmgr' utility found at '"+jPBSEnvironment.qmgr+"'");
 		} else jPBSLogger.logError("Failed to load environment info");
 	}
 	
@@ -30,6 +32,9 @@ public class jPBSServer {
 		// Update server in the foreground
 		me.server.updateSelf();
 		me.server.debugPrint();
+		
+		jPBSUpdater updater = new jPBSUpdater(me.server, false);
+		updater.start();
 		
 		// Update children in the background
 	}

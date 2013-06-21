@@ -1,8 +1,14 @@
 package acs.jpbs.server.core;
 
-public interface IPbsObject {
+import java.util.List;
 
-	public void updateSelf();
+public interface IPbsObject {
 	
-	public void updateChildren();
+	void getChildren();
+
+	void parseQstatData(List<String> rawData);
+	
+	void updateSelf();
+	
+	void updateChildren(List<String> rawData);
 }

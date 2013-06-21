@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import acs.jpbs.utils.jPBSLogger;
+import acs.jpbs.utils.jPBSUtils;
 
 public class jPBSEnvironment {
 	public static File qstat;
+	public static File qmgr;
 	
 	private jPBSEnvironment() { }
 	
@@ -15,25 +17,38 @@ public class jPBSEnvironment {
 		String sysPathString = System.getenv("PATH");
 		List<String> sysPaths = Arrays.asList(sysPathString.split(";"));
 		
+		boolean qstatFound = false;
+		boolean qmgrFound = false;
 		File qstatCheck;
+		File qmgrCheck;
 		for(String pathString : sysPaths) {
 			qstatCheck = new File(pathString, "qstat.exe");
 			if(qstatCheck.canExecute()) {
 				qstat = qstatCheck;
-				return true;
+				qstatFound = true;
 			}
+			if(qstatFound) {
+				qmgrCheck = new File(pathString, "qmgr.exe");
+				if(qmgrCheck.canExecute()) {
+					qmgr = qmgrCheck;
+					qmgrFound = true;
+				}
+			}
+			if(qstatFound && qmgrFound) return true;
 		}
 		qstat = null;
+		qmgr = null;
 		return false;
 	}
 	
-	public static List<String> retrieveQstatOutput(String args[]) {
+	private static List<String> retrieveCmdOutput(String args[]) {
 		List<String> outputLines = new ArrayList<String>();
 		List<String> cmd = new ArrayList<String>();
 		cmd.add("cmd");
 		cmd.add("/c");
-		cmd.add(qstat.getPath());
 		cmd.addAll(Arrays.asList(args));
+		
+		for(String cmds : cmd) System.out.println(cmds + " ; ");
 		
 		try {
 			ProcessBuilder pb = new ProcessBuilder(cmd);
@@ -59,5 +74,13 @@ public class jPBSEnvironment {
 		for(Integer badLine : toRemove) outputLines.remove(badLine.intValue());
 				
 		return outputLines;
+	}
+	
+	public static List<String> retrieveQmgrOutput(String args[]) {
+		return retrieveCmdOutput(jPBSUtils.concat(new String[]{qmgr.getPath(), "-c"}, args));
+	}
+	
+	public static List<String> retrieveQstatOutput(String args[]) {
+		return retrieveCmdOutput(jPBSUtils.concat(new String[]{qstat.getPath()}, args));
 	}
 }
