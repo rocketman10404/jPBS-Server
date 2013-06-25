@@ -1,23 +1,26 @@
 package acs.jpbs.server.core;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import acs.jbps.attrib.PbsResource;
 import acs.jbps.attrib.PbsServerLicenses;
 import acs.jbps.attrib.PbsStateCount;
 import acs.jbps.enums.PbsServerState;
-import acs.jpbs.core.PbsQueue;
+import acs.jpbs.server.core.PbsQueue;
 import acs.jpbs.serverUtils.jPBSEnvironment;
+import acs.jpbs.serverUtils.jPBSUpdater;
 
 public class PbsServer extends acs.jpbs.core.PbsServer implements IPbsObject {
-
+	public HashMap<String, PbsQueue> queues = new HashMap<String, PbsQueue>();
+	
 	public void getChildren() {
 		// get queue list output, pass to update children
-		this.updateChildren(jPBSEnvironment.retrieveQmgrOutput(new String[]{"'list queue @hn1'"}));
+		this.updateChildren(jPBSEnvironment.retrieveQmgrOutput(new String[]{"list queue @hn1"}));
 	}
 	
-	public void parseQstatData(List<String> rawData) {
+	public void parseRawData(List<String> rawData) {
 		String[] rawArr;
 		List<String[]> rawResourcesAssigned = new ArrayList<String[]>();
 		List<String[]> rawDefaultChunk = new ArrayList<String[]>();
@@ -31,10 +34,7 @@ public class PbsServer extends acs.jpbs.core.PbsServer implements IPbsObject {
 			else if(rawArr[0].equals("server_host")) this.host = rawArr[1].trim();
 			else if(rawArr[0].equals("scheduling")) this.scheduling = Boolean.parseBoolean(rawArr[1].trim());
 			else if(rawArr[0].equals("state_count")) this.stateCount = PbsStateCount.parseStateCount(rawArr[1].trim());
-			else if(rawArr[0].equals("default_queue")) {
-				this.defaultQueue = new PbsQueue(rawArr[1].trim());
-				this.queues.put(this.defaultQueue.getName(), this.defaultQueue);
-			}
+			else if(rawArr[0].equals("default_queue")) this.defaultQueue = rawArr[1].trim();
 			else if(rawArr[0].equals("scheduler_iteration")) this.schedulerIteration = Integer.parseInt(rawArr[1].trim());
 			else if(rawArr[0].equals("FLicenses")) this.fLicenses = Integer.parseInt(rawArr[1].trim());
 			else if(rawArr[0].equals("resv_enable")) this.resvEnable = Boolean.parseBoolean(rawArr[1].trim());
@@ -49,13 +49,33 @@ public class PbsServer extends acs.jpbs.core.PbsServer implements IPbsObject {
 	}
 	
 	public void updateSelf() {
-		this.parseQstatData(jPBSEnvironment.retrieveQstatOutput(new String[]{"-Bf"}));
+		this.parseRawData(jPBSEnvironment.retrieveQmgrOutput(new String[]{"list server"}));
 	}
 	
 	public void updateChildren(List<String> rawData) { 
 		// search through data for queues, spawn updater threads for each
+		List<String> rawQueueData = new ArrayList<String>();
+		PbsQueue qPtr = null;
 		for(String queues : rawData) {
-			System.out.println("[QINFO] '"+queues+"'");
+			// If new queue data found
+			if(queues.startsWith("Queue ")) {
+				// If previous queue data exists, initiate updater for queue object, pass and clear temp data
+				if(rawQueueData.size() > 0 && qPtr != null) {
+					this.queues.put(qPtr.getName(), qPtr);
+					jPBSUpdater updateThread = new jPBSUpdater((IPbsObject)qPtr);
+					updateThread.setRawData(rawQueueData);
+					updateThread.run();
+					rawQueueData = new ArrayList<String>();
+				}
+				String qName = queues.substring(6);
+				if(!this.queues.containsKey(qName)) {
+					qPtr = new PbsQueue(qName, this);
+				} else {
+					qPtr = this.queues.get(qName);
+				}
+			} else {
+				rawQueueData.add(queues);
+			}
 		}
 	}
 }

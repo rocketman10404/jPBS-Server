@@ -6,7 +6,7 @@ public interface IPbsObject {
 	
 	void getChildren();
 
-	void parseQstatData(List<String> rawData);
+	void parseRawData(List<String> rawData);
 	
 	void updateSelf();
 	

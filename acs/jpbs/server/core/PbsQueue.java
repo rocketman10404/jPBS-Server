@@ -9,15 +9,15 @@ import acs.jbps.enums.PbsQueueType;
 
 public class PbsQueue extends acs.jpbs.core.PbsQueue implements IPbsObject {
 
-	public PbsQueue(String _name) {
-		super(_name);
+	public PbsQueue(String _name, PbsServer myServer) {
+		super(_name, myServer);
 	}
 	
 	public void getChildren() {
 		
 	}
 	
-	public void parseQstatData(List<String> rawData) {
+	public void parseRawData(List<String> rawData) {
 		String[] rawArr;
 		List<String[]> rawResourcesAssigned = new ArrayList<String[]>();
 		List<String[]> rawDefaultChunk = new ArrayList<String[]>();

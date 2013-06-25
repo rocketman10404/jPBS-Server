@@ -8,7 +8,7 @@ public class PbsJob extends acs.jpbs.core.PbsJob implements IPbsObject {
 		return;
 	}
 	
-	public void parseQstatData(List<String> rawData) { }
+	public void parseRawData(List<String> rawData) { }
 	
 	public void updateSelf() { }
 	

@@ -41,14 +41,12 @@ public class jPBSEnvironment {
 		return false;
 	}
 	
-	private static List<String> retrieveCmdOutput(String args[]) {
+	private static List<String> retrieveCmdOutput(String args[], String longLineDelimiter) {
 		List<String> outputLines = new ArrayList<String>();
 		List<String> cmd = new ArrayList<String>();
 		cmd.add("cmd");
 		cmd.add("/c");
 		cmd.addAll(Arrays.asList(args));
-		
-		for(String cmds : cmd) System.out.println(cmds + " ; ");
 		
 		try {
 			ProcessBuilder pb = new ProcessBuilder(cmd);
@@ -63,7 +61,7 @@ public class jPBSEnvironment {
 		
 		List<Integer> toRemove = new ArrayList<Integer>();
 		for(int i=outputLines.size()-1; i>=0; i--) {
-			if(outputLines.get(i).startsWith("\t") && i>0) {
+			if(outputLines.get(i).startsWith(longLineDelimiter) && i>0) {
 				outputLines.set(i-1, outputLines.get(i-1)+outputLines.get(i).trim());
 				toRemove.add(i);
 			} else {
@@ -77,10 +75,12 @@ public class jPBSEnvironment {
 	}
 	
 	public static List<String> retrieveQmgrOutput(String args[]) {
-		return retrieveCmdOutput(jPBSUtils.concat(new String[]{qmgr.getPath(), "-c"}, args));
+		StringBuilder joinedCmd = new StringBuilder();
+		joinedCmd.append("\"\"").append(qmgr.getPath()).append("\" -c \"").append(jPBSUtils.join(args, " ")).append("\"");
+		return retrieveCmdOutput(new String[]{joinedCmd.toString()}, "\t\t");
 	}
 	
 	public static List<String> retrieveQstatOutput(String args[]) {
-		return retrieveCmdOutput(jPBSUtils.concat(new String[]{qstat.getPath()}, args));
+		return retrieveCmdOutput(jPBSUtils.concat(new String[]{qstat.getPath()}, args), "\t");
 	}
 }
