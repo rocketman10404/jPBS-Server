@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 
-import acs.jpbs.utils.jPBSLogger;
+import acs.jpbs.utils.Logger;
 
 public class StdOutHandler extends Thread {
 	Process proc = null;
@@ -24,7 +24,7 @@ public class StdOutHandler extends Thread {
 				line = reader.readLine();
 			}
 		} catch (Exception e) {
-			jPBSLogger.logException("An error occurred while processing input", e);
+			Logger.logException("An error occurred while processing input", e);
 		}
 	}
 }

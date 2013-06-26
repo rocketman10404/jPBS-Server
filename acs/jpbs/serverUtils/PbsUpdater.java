@@ -4,24 +4,23 @@ import java.util.List;
 
 import acs.jpbs.server.core.IPbsObject;
 
-public class jPBSUpdater extends Thread {
+public class PbsUpdater extends Thread {
 	public static enum Method {
-		UPDATE_SELF(1),
-		UPDATE_CHILDREN(2),
-		UPDATE_ALL(3);
-		private int id;
-		Method(int _id) { this.id = _id; }
+		UPDATE_SELF(),
+		UPDATE_CHILDREN(),
+		UPDATE_ALL();
+		Method() { }
 	}
 	
 	private IPbsObject root = null;
 	private List<String> rawData = null;
 	private Method updateMethod = Method.UPDATE_SELF;
 	
-	public jPBSUpdater(IPbsObject obj) {
+	public PbsUpdater(IPbsObject obj) {
 		this.root = obj;
 	}
 	
-	public jPBSUpdater(IPbsObject obj, Method how) {
+	public PbsUpdater(IPbsObject obj, Method how) {
 		this(obj);
 		this.updateMethod = how;
 	}
@@ -31,7 +30,7 @@ public class jPBSUpdater extends Thread {
 	}
 	
 	public void run() {
-		jPBSUpdateManager.addToQueue(this);
+		PbsUpdateManager.addToQueue(this);
 		
 		if(this.updateMethod != Method.UPDATE_CHILDREN) {
 			if(this.rawData == null) this.root.updateSelf();
@@ -39,6 +38,6 @@ public class jPBSUpdater extends Thread {
 		}
 		if(this.updateMethod != Method.UPDATE_SELF) this.root.getChildren();
 		
-		jPBSUpdateManager.subtractFromQueue(this);
+		PbsUpdateManager.subtractFromQueue(this);
 	}
 }

@@ -1,20 +1,20 @@
 package acs.jpbs.server;
 
-import acs.jpbs.server.core.PbsServer;
-import acs.jpbs.serverUtils.jPBSEnvironment;
-import acs.jpbs.serverUtils.jPBSUpdateManager;
-import acs.jpbs.serverUtils.jPBSUpdater;
-import acs.jpbs.utils.jPBSLogger;
+import acs.jpbs.core.PbsServer;
+import acs.jpbs.server.core.PbsServerHandler;
+import acs.jpbs.serverUtils.PbsEnvironment;
+import acs.jpbs.serverUtils.PbsUpdateManager;
+import acs.jpbs.utils.Logger;
 
 public class jPBSServer {
 	private static jPBSServer instance = null;
 	public PbsServer server = null;
 
 	private jPBSServer() {
-		if(jPBSEnvironment.initEnv()) {
-			jPBSLogger.logInfo("Environment loaded, 'qstat' utility found at '"+jPBSEnvironment.qstat+"'");
-			jPBSLogger.logInfo("'qmgr' utility found at '"+jPBSEnvironment.qmgr+"'");
-		} else jPBSLogger.logError("Failed to load environment info");
+		if(PbsEnvironment.initEnv()) {
+			Logger.logInfo("Environment loaded, 'qstat' utility found at '"+PbsEnvironment.qstat+"'");
+			Logger.logInfo("'qmgr' utility found at '"+PbsEnvironment.qmgr+"'");
+		} else Logger.logError("Failed to load environment info");
 	}
 	
 	public static jPBSServer getInstance() {
@@ -28,9 +28,9 @@ public class jPBSServer {
 	
 	public static void main(String args[]) {
 		jPBSServer me = getInstance();
-		me.server = new PbsServer();
+		me.server = new PbsServerHandler();
 		
 		// Update server in the background		
-		jPBSUpdateManager.beginUpdate(me.server);
+		PbsUpdateManager.beginUpdate((PbsServerHandler)me.server);
 	}
 }

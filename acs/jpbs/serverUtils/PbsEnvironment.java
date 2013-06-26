@@ -4,14 +4,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import acs.jpbs.utils.jPBSLogger;
-import acs.jpbs.utils.jPBSUtils;
+import acs.jpbs.utils.Logger;
+import acs.jpbs.utils.Utils;
 
-public class jPBSEnvironment {
+public class PbsEnvironment {
 	public static File qstat;
 	public static File qmgr;
 	
-	private jPBSEnvironment() { }
+	private PbsEnvironment() { }
 	
 	public static boolean initEnv() {
 		String sysPathString = System.getenv("PATH");
@@ -56,7 +56,7 @@ public class jPBSEnvironment {
 			result.start();
 			p.waitFor();
 		} catch(Exception e) {
-			jPBSLogger.logException("Exception occurred", e);
+			Logger.logException("Exception occurred", e);
 		}
 		
 		List<Integer> toRemove = new ArrayList<Integer>();
@@ -76,11 +76,13 @@ public class jPBSEnvironment {
 	
 	public static List<String> retrieveQmgrOutput(String args[]) {
 		StringBuilder joinedCmd = new StringBuilder();
-		joinedCmd.append("\"\"").append(qmgr.getPath()).append("\" -c \"").append(jPBSUtils.join(args, " ")).append("\"");
+		joinedCmd.append("\"\"").append(qmgr.getPath()).append("\" -c \"").append(Utils.join(args, " ")).append("\"");
 		return retrieveCmdOutput(new String[]{joinedCmd.toString()}, "\t\t");
 	}
 	
 	public static List<String> retrieveQstatOutput(String args[]) {
-		return retrieveCmdOutput(jPBSUtils.concat(new String[]{qstat.getPath()}, args), "\t");
+		StringBuilder joinedCmd = new StringBuilder();
+		joinedCmd.append("\"\"").append(qstat.getPath()).append("\" -f ").append(Utils.join(args, " ")).append("\"");
+		return retrieveCmdOutput(new String[]{joinedCmd.toString()}, "\t");
 	}
 }
