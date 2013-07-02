@@ -6,6 +6,7 @@ import java.util.concurrent.BlockingQueue;
 
 import acs.jpbs.core.PbsQueue;
 import acs.jpbs.server.jPBSServer;
+import acs.jpbs.server.core.PbsQueueHandler;
 import acs.jpbs.server.core.PbsServerHandler;
 import acs.jpbs.utils.Logger;
 
@@ -36,13 +37,28 @@ public class PbsUpdateManager {
 	}
 	
 	private static void updateCompletedEvent() {
-		Logger.logInfo("Update completed.");
-		Logger.logInfo("Server name: '"+jPBSServer.getInstance().server.getHostName()+"'");
-		Logger.logInfo("Queues found: "+jPBSServer.getInstance().server.queues.size());
+		PbsServerHandler sHandler = jPBSServer.pbsServer;
+		PbsQueueHandler qHandler;
 		int jobs = 0;
-		for(Entry<String, PbsQueue> qEntry : jPBSServer.getInstance().server.queues.entrySet()) {
-			jobs += qEntry.getValue().jobs.size();
-			Logger.logInfo("Queue '"+qEntry.getValue().getName()+"' has "+Integer.toString(qEntry.getValue().jobs.size())+" jobs");
+		
+		Logger.logInfo("Update completed.");
+		Logger.logInfo("Server name: '"+sHandler.getHostName()+"'");
+		
+		sHandler.queueMapReadLock.lock();
+		try {
+			Logger.logInfo("Queues found: "+sHandler.queues.size());
+			for(Entry<String, PbsQueue> qEntry : sHandler.queues.entrySet()) {
+				qHandler = (PbsQueueHandler)qEntry.getValue();
+				qHandler.jobMapReadLock.lock();
+				try {
+					jobs += qHandler.jobs.size();
+					Logger.logInfo("Queue '"+qHandler.getName()+"' has "+Integer.toString(qHandler.jobs.size())+" jobs");
+				} finally {
+					qHandler.jobMapReadLock.unlock();
+				}
+			}
+		} finally {
+			sHandler.queueMapReadLock.unlock();
 		}
 		Logger.logInfo("Total jobs found: "+jobs);
 	}

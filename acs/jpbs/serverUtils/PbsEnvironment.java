@@ -1,6 +1,7 @@
 package acs.jpbs.serverUtils;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,6 +11,16 @@ import acs.jpbs.utils.Utils;
 public class PbsEnvironment {
 	public static File qstat;
 	public static File qmgr;
+	public static String localHost;
+	static {
+		try {
+			localHost = InetAddress.getLocalHost().getHostAddress();
+		} catch (Exception e) {
+			Logger.logException("Unable to retreive hostname", e);
+			localHost = "localhost";
+		}
+	}
+	
 	
 	private PbsEnvironment() { }
 	
