@@ -3,15 +3,16 @@ package acs.jpbs.server.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import acs.jbps.attrib.PbsResource;
-import acs.jbps.enums.PbsJobState;
-import acs.jpbs.core.PbsQueue;
+import acs.jpbs.attrib.PbsResource;
+import acs.jpbs.enums.PbsJobState;
 import acs.jpbs.serverUtils.PbsEnvironment;
 import acs.jpbs.utils.Utils;
 
 public class PbsJobHandler extends acs.jpbs.core.PbsJob implements IPbsObject {
 	
-	public PbsJobHandler(int _id, PbsQueue _q) {
+	private static final long serialVersionUID = 3703777007096790515L;
+
+	public PbsJobHandler(int _id, String _q) {
 		super(_id, _q);
 	}
 	

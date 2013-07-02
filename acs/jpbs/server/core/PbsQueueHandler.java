@@ -3,14 +3,16 @@ package acs.jpbs.server.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import acs.jbps.attrib.PbsResource;
-import acs.jbps.attrib.PbsStateCount;
-import acs.jbps.enums.PbsQueueType;
+import acs.jpbs.attrib.PbsResource;
+import acs.jpbs.attrib.PbsStateCount;
+import acs.jpbs.enums.PbsQueueType;
 import acs.jpbs.serverUtils.PbsEnvironment;
 import acs.jpbs.serverUtils.PbsUpdater;
 import acs.jpbs.utils.Utils;
 
 public class PbsQueueHandler extends acs.jpbs.core.PbsQueue implements IPbsObject {
+
+	private static final long serialVersionUID = 8184349070425307083L;
 
 	public PbsQueueHandler(String _name, PbsServerHandler myServer) {
 		super(_name, myServer);
@@ -20,7 +22,7 @@ public class PbsQueueHandler extends acs.jpbs.core.PbsQueue implements IPbsObjec
 		// get job list output, pass to update children
 		this.updateChildren(PbsEnvironment.retrieveQstatOutput(new String[]{"-f ",this.name}));
 	}
-	
+		
 	public void parseRawData(List<String> rawData) {
 		if(rawData == null || rawData.isEmpty()) return;
 		String[] rawArr;
@@ -57,24 +59,39 @@ public class PbsQueueHandler extends acs.jpbs.core.PbsQueue implements IPbsObjec
 			if(jobs.startsWith("Job Id: ")) {
 				// If previous job data exists, initiate updater for job object, pass and clear temp data
 				if(rawJobData.size() > 0 && jPtr != null) {
-					this.jobs.put(jPtr.getId(), jPtr);
+					this.jobMapWriteLock.lock();
+					try {
+						this.jobs.put(jPtr.getId(), jPtr);
+					} finally {
+						this.jobMapWriteLock.unlock();
+					}
 					PbsUpdater updateThread = new PbsUpdater((IPbsObject)jPtr);
 					updateThread.setRawData(rawJobData);
 					updateThread.run();
 					rawJobData = new ArrayList<String>();
 				}
 				int jId = Utils.parseId(jobs.substring(8));
-				if(!this.jobs.containsKey(jId)) {
-					jPtr = new PbsJobHandler(jId, this);
-				} else {
-					jPtr = (PbsJobHandler)this.jobs.get(jId);
+				this.jobMapReadLock.lock();
+				try {
+					if(!this.jobs.containsKey(jId)) {
+						jPtr = new PbsJobHandler(jId, this.name);
+					} else {
+						jPtr = (PbsJobHandler)this.jobs.get(jId);
+					}
+				} finally {
+					this.jobMapReadLock.unlock();
 				}
 			} else {
 				rawJobData.add(jobs);
 			}
 		}
 		if(rawJobData.size() > 0 && jPtr != null) {
-			this.jobs.put(jPtr.getId(), jPtr);
+			this.jobMapWriteLock.lock();
+			try {
+				this.jobs.put(jPtr.getId(), jPtr);
+			} finally {
+				this.jobMapWriteLock.unlock();
+			}
 			PbsUpdater updateThread = new PbsUpdater((IPbsObject)jPtr);
 			updateThread.setRawData(rawJobData);
 			updateThread.run();
