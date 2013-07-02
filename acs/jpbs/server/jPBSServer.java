@@ -44,7 +44,7 @@ public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterfa
 			Logger.logInfo("'qmgr' utility found at '"+PbsEnvironment.qmgr+"'");
 		} else Logger.logError("Failed to load environment info");
 		pbsServer = PbsServerHandler.getInstance();
-		// Update server in the background		
+		// Update server in the background
 		PbsUpdateManager.beginUpdate(pbsServer);
 	}
 		
@@ -127,10 +127,8 @@ public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterfa
 		jPBSServerInterface service = null;
 		try {
 			service = new jPBSServer();
-			//String serverObjName = "rmi://" + PbsEnvironment.localHost + ":" + servicePort + "/" + serviceName;
-			//Naming.rebind(serverObjName, service);
-			Registry registry = LocateRegistry.getRegistry();
-			registry.rebind("rmi://LT1109A:" + servicePort + "/" + serviceName, service);
+			Registry registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+			registry.bind(serviceName, service);
 			Logger.logInfo("jPBS service running.");
 		} catch (Exception e) {
 			Logger.logException("Error initializing service", e);
