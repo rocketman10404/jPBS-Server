@@ -9,6 +9,7 @@ import acs.jpbs.utils.Logger;
 import acs.jpbs.utils.Utils;
 
 public class PbsEnvironment {
+	private static String os = null;
 	public static File qstat;
 	public static File qmgr;
 	public static String localHost;
@@ -21,25 +22,41 @@ public class PbsEnvironment {
 		}
 	}
 	
-	
 	private PbsEnvironment() { }
+	
+	private static String getOsName() {
+		if(os == null) os = System.getProperty("os.name");
+		return os;
+	}
 	
 	public static boolean initEnv() {
 		String sysPathString = System.getenv("PATH");
-		List<String> sysPaths = Arrays.asList(sysPathString.split(";"));
+		List<String> sysPaths;
+		String qstatName;
+		String qmgrName;
+		
+		if(isWindows()) {
+			qstatName = "qstat.exe";
+			qmgrName = "qmgr.exe";
+			sysPaths = Arrays.asList(sysPathString.split(";"));
+		} else {
+			qstatName = "qstat";
+			qmgrName = "qmgr";
+			sysPaths = Arrays.asList(sysPathString.split(":"));
+		}
 		
 		boolean qstatFound = false;
 		boolean qmgrFound = false;
 		File qstatCheck;
 		File qmgrCheck;
 		for(String pathString : sysPaths) {
-			qstatCheck = new File(pathString, "qstat.exe");
+			qstatCheck = new File(pathString, qstatName);
 			if(qstatCheck.canExecute()) {
 				qstat = qstatCheck;
 				qstatFound = true;
 			}
 			if(qstatFound) {
-				qmgrCheck = new File(pathString, "qmgr.exe");
+				qmgrCheck = new File(pathString, qmgrName);
 				if(qmgrCheck.canExecute()) {
 					qmgr = qmgrCheck;
 					qmgrFound = true;
@@ -52,11 +69,21 @@ public class PbsEnvironment {
 		return false;
 	}
 	
+	public static boolean isLinux() {
+		return getOsName().startsWith("Linux");
+	}
+	
+	public static boolean isWindows() {
+		return getOsName().startsWith("Windows");
+	}
+	
 	private static List<String> retrieveCmdOutput(String args[], String longLineDelimiter) {
 		List<String> outputLines = new ArrayList<String>();
 		List<String> cmd = new ArrayList<String>();
-		cmd.add("cmd");
-		cmd.add("/c");
+		if(isWindows()) {
+			cmd.add("cmd");
+			cmd.add("/c");
+		}
 		cmd.addAll(Arrays.asList(args));
 		
 		try {
@@ -86,14 +113,23 @@ public class PbsEnvironment {
 	}
 	
 	public static List<String> retrieveQmgrOutput(String args[]) {
-		StringBuilder joinedCmd = new StringBuilder();
-		joinedCmd.append("\"\"").append(qmgr.getPath()).append("\" -c \"").append(Utils.join(args, " ")).append("\"");
-		return retrieveCmdOutput(new String[]{joinedCmd.toString()}, "\t\t");
+		if(isWindows()) {
+			StringBuilder joinedCmd = new StringBuilder();
+			joinedCmd.append("\"\"").append(qmgr.getPath()).append("\" -c \"").append(Utils.join(args, " ")).append("\"");
+			return retrieveCmdOutput(new String[]{joinedCmd.toString()}, "\t\t");
+		} else {
+			return retrieveCmdOutput(new String[]{qmgr.getPath(), "-c", Utils.join(args, " ")}, "\t\t");
+		}
+		
 	}
 	
 	public static List<String> retrieveQstatOutput(String args[]) {
-		StringBuilder joinedCmd = new StringBuilder();
-		joinedCmd.append("\"\"").append(qstat.getPath()).append("\" -f ").append(Utils.join(args, " ")).append("\"");
-		return retrieveCmdOutput(new String[]{joinedCmd.toString()}, "\t");
+		if(isWindows()) {
+			StringBuilder joinedCmd = new StringBuilder();
+			joinedCmd.append("\"\"").append(qstat.getPath()).append("\" ").append(Utils.join(args, " ")).append("\"");
+			return retrieveCmdOutput(new String[]{joinedCmd.toString()}, "\t");
+		} else {
+			return retrieveCmdOutput(Utils.concat(new String[]{qstat.getPath()}, args), "\t");
+		}
 	}
 }
