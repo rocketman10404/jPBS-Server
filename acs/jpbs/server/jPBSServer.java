@@ -10,15 +10,15 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import acs.jpbs.core.IPbsObject;
 import acs.jpbs.core.PbsJob;
+import acs.jpbs.core.PbsJobHandler;
 import acs.jpbs.core.PbsQueue;
+import acs.jpbs.core.PbsQueueHandler;
 import acs.jpbs.core.PbsServer;
+import acs.jpbs.core.PbsServerHandler;
 import acs.jpbs.net.jPBSClientInterface;
 import acs.jpbs.net.jPBSServerInterface;
-import acs.jpbs.server.core.IPbsObject;
-import acs.jpbs.server.core.PbsJobHandler;
-import acs.jpbs.server.core.PbsQueueHandler;
-import acs.jpbs.server.core.PbsServerHandler;
 import acs.jpbs.serverUtils.PbsEnvironment;
 import acs.jpbs.serverUtils.PbsUpdateManager;
 import acs.jpbs.utils.Logger;
@@ -26,7 +26,7 @@ import acs.jpbs.utils.Logger;
 public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterface {
 
 	private static final long serialVersionUID = 7037513788004765212L;
-	public static PbsServer pbsServer = null;
+	public static PbsServerHandler pbsServer = null;
 	public final static String serviceName = "jPBS-Server";
 	public final static int servicePort = 31122;
 	public List<jPBSClientInterface> clients = new LinkedList<jPBSClientInterface>();
@@ -45,7 +45,7 @@ public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterfa
 		PbsUpdateManager.beginUpdate((PbsServerHandler)pbsServer);
 	}
 		
-	public PbsServer getServerObject() throws RemoteException { return pbsServer; }
+	public PbsServer getServerObject() throws RemoteException { return pbsServer.getServer(); }
 	
 	public PbsQueue[] getQueueArray() throws RemoteException {
 		return pbsServer.getQueueArray();

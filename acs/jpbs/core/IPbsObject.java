@@ -1,4 +1,4 @@
-package acs.jpbs.server.core;
+package acs.jpbs.core;
 
 import java.util.List;
 

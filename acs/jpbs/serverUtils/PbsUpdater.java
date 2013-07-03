@@ -2,7 +2,7 @@ package acs.jpbs.serverUtils;
 
 import java.util.List;
 
-import acs.jpbs.server.core.IPbsObject;
+import acs.jpbs.core.IPbsObject;
 
 public class PbsUpdater extends Thread {
 	public static enum Method {

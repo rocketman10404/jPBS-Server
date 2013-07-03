@@ -4,8 +4,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import acs.jpbs.core.PbsServer;
+import acs.jpbs.core.PbsServerHandler;
 import acs.jpbs.server.jPBSServer;
-import acs.jpbs.server.core.PbsServerHandler;
 import acs.jpbs.utils.Logger;
 
 public class PbsUpdateManager {
@@ -35,7 +35,7 @@ public class PbsUpdateManager {
 	}
 	
 	private static void updateCompletedEvent() {
-		PbsServer sHandler = jPBSServer.pbsServer;
+		PbsServer sHandler = jPBSServer.pbsServer.getServer();
 		
 		Logger.logInfo("Update completed.");
 		Logger.logInfo("PBS Server name: '"+sHandler.getHostName()+"'");
