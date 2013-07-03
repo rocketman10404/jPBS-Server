@@ -95,6 +95,7 @@ public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterfa
 		clientsWriteLock.lock();
 		try {
 			this.clients.add(newClient);
+			Logger.logInfo("New client connected: "+this.clients.size()+" client(s) total.");
 		} finally {
 			clientsWriteLock.unlock();
 		}
@@ -119,9 +120,7 @@ public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterfa
 		}
 	}
 	
-	public static void main(String args[]) {
-		System.setProperty("java.rmi.server.hostname", "LT1109A");
-		
+	public static void main(String args[]) {		
 		Logger.logInfo("Initializing jPBS Server service...");
 		jPBSServerInterface service = null;
 		try {
