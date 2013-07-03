@@ -73,39 +73,21 @@ public class PbsServerHandler extends acs.jpbs.core.PbsServer implements IPbsObj
 			if(queues.startsWith("Queue ")) {
 				// If previous queue data exists, initiate updater for queue object, pass and clear temp data
 				if(rawQueueData.size() > 0 && qPtr != null) {
-					this.queueMapWriteLock.lock();
-					try {
-						this.queues.put(qPtr.getName(), qPtr);
-					} finally {
-						this.queueMapWriteLock.unlock();
-					}
+					this.addQueue(qPtr);
 					PbsUpdater updateThread = new PbsUpdater((IPbsObject)qPtr, PbsUpdater.Method.UPDATE_ALL);
 					updateThread.setRawData(rawQueueData);
 					updateThread.run();
 					rawQueueData = new ArrayList<String>();
 				}
 				String qName = queues.substring(6);
-				this.queueMapReadLock.lock();
-				try {
-					if(!this.queues.containsKey(qName)) {
-						qPtr = new PbsQueueHandler(qName, this);
-					} else {
-						qPtr = (PbsQueueHandler)this.queues.get(qName);
-					}
-				} finally {
-					this.queueMapReadLock.unlock();
-				}
+				qPtr = (PbsQueueHandler)this.getQueue(qName);
+				if(qPtr == null) qPtr = new PbsQueueHandler(qName, this);
 			} else {
 				rawQueueData.add(queues);
 			}
 		}
 		if(rawQueueData.size() > 0 && qPtr != null) {
-			this.queueMapWriteLock.lock();
-			try {
-				this.queues.put(qPtr.getName(), qPtr);
-			} finally {
-				this.queueMapWriteLock.unlock();
-			}
+			this.addQueue(qPtr);
 			PbsUpdater updateThread = new PbsUpdater((IPbsObject)qPtr, PbsUpdater.Method.UPDATE_ALL);
 			updateThread.setRawData(rawQueueData);
 			updateThread.run();

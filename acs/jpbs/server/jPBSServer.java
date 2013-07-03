@@ -4,11 +4,9 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -28,7 +26,7 @@ import acs.jpbs.utils.Logger;
 public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterface {
 
 	private static final long serialVersionUID = 7037513788004765212L;
-	public static PbsServerHandler pbsServer = null;
+	public static PbsServer pbsServer = null;
 	public final static String serviceName = "jPBS-Server";
 	public final static int servicePort = 31122;
 	public List<jPBSClientInterface> clients = new LinkedList<jPBSClientInterface>();
@@ -44,51 +42,17 @@ public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterfa
 		} else Logger.logError("Failed to load environment info");
 		pbsServer = PbsServerHandler.getInstance();
 		// Update server in the background
-		PbsUpdateManager.beginUpdate(pbsServer);
+		PbsUpdateManager.beginUpdate((PbsServerHandler)pbsServer);
 	}
 		
-	public PbsServer getServerObject() throws RemoteException { return (PbsServer)pbsServer; }
+	public PbsServer getServerObject() throws RemoteException { return pbsServer; }
 	
 	public PbsQueue[] getQueueArray() throws RemoteException {
-		if(pbsServer.queues == null || pbsServer.queues.isEmpty()) return null;
-		PbsQueue[] returnArr = null;
-		
-		pbsServer.queueMapReadLock.lock();
-		try {
-			returnArr = new PbsQueue[pbsServer.queues.size()];
-			int i = 0;
-			for(Entry<String, PbsQueue> qEntry : pbsServer.queues.entrySet()) {
-				returnArr[i++] = qEntry.getValue();
-			}
-		} finally {
-			pbsServer.queueMapReadLock.unlock();
-		}
-		return returnArr;
+		return pbsServer.getQueueArray();
 	}
 	
 	public PbsJob[] getJobArray() throws RemoteException { 
-		if(pbsServer.queues == null || pbsServer.queues.isEmpty()) return null;
-		List<PbsJob> returnList = new ArrayList<PbsJob>();
-		
-		pbsServer.queueMapReadLock.lock();
-		try {
-			for(Entry<String, PbsQueue> qEntry : pbsServer.queues.entrySet()) {
-				PbsQueue qValue = qEntry.getValue();
-				qValue.jobMapReadLock.lock();
-				try {
-					for(Entry<Integer, PbsJob> jEntry : qValue.jobs.entrySet()) {
-						returnList.add(jEntry.getValue());
-					}
-				} finally {
-					qValue.jobMapReadLock.unlock();
-				}
-			}
-		} finally {
-			pbsServer.queueMapReadLock.unlock();
-		}
-		
-		if(returnList.isEmpty()) return null;
-		else return (PbsJob[])returnList.toArray();
+		return pbsServer.getJobArray();
 	}
 	
 	public void register(jPBSClientInterface newClient) throws RemoteException {

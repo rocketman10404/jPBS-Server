@@ -1,12 +1,10 @@
 package acs.jpbs.serverUtils;
 
-import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import acs.jpbs.core.PbsQueue;
+import acs.jpbs.core.PbsServer;
 import acs.jpbs.server.jPBSServer;
-import acs.jpbs.server.core.PbsQueueHandler;
 import acs.jpbs.server.core.PbsServerHandler;
 import acs.jpbs.utils.Logger;
 
@@ -37,29 +35,11 @@ public class PbsUpdateManager {
 	}
 	
 	private static void updateCompletedEvent() {
-		PbsServerHandler sHandler = jPBSServer.pbsServer;
-		PbsQueueHandler qHandler;
-		int jobs = 0;
+		PbsServer sHandler = jPBSServer.pbsServer;
 		
 		Logger.logInfo("Update completed.");
-		Logger.logInfo("Server name: '"+sHandler.getHostName()+"'");
-		
-		sHandler.queueMapReadLock.lock();
-		try {
-			Logger.logInfo("Queues found: "+sHandler.queues.size());
-			for(Entry<String, PbsQueue> qEntry : sHandler.queues.entrySet()) {
-				qHandler = (PbsQueueHandler)qEntry.getValue();
-				qHandler.jobMapReadLock.lock();
-				try {
-					jobs += qHandler.jobs.size();
-					Logger.logInfo("Queue '"+qHandler.getName()+"' has "+Integer.toString(qHandler.jobs.size())+" jobs");
-				} finally {
-					qHandler.jobMapReadLock.unlock();
-				}
-			}
-		} finally {
-			sHandler.queueMapReadLock.unlock();
-		}
-		Logger.logInfo("Total jobs found: "+jobs);
+		Logger.logInfo("PBS Server name: '"+sHandler.getHostName()+"'");
+		Logger.logInfo("Queues found: "+sHandler.getNumQueues());
+		Logger.logInfo("Total jobs found: "+sHandler.getNumJobs());
 	}
 }

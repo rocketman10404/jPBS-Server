@@ -59,39 +59,21 @@ public class PbsQueueHandler extends acs.jpbs.core.PbsQueue implements IPbsObjec
 			if(jobs.startsWith("Job Id: ")) {
 				// If previous job data exists, initiate updater for job object, pass and clear temp data
 				if(rawJobData.size() > 0 && jPtr != null) {
-					this.jobMapWriteLock.lock();
-					try {
-						this.jobs.put(jPtr.getId(), jPtr);
-					} finally {
-						this.jobMapWriteLock.unlock();
-					}
+					this.addJob(jPtr);
 					PbsUpdater updateThread = new PbsUpdater((IPbsObject)jPtr);
 					updateThread.setRawData(rawJobData);
 					updateThread.run();
 					rawJobData = new ArrayList<String>();
 				}
 				int jId = Utils.parseId(jobs.substring(8));
-				this.jobMapReadLock.lock();
-				try {
-					if(!this.jobs.containsKey(jId)) {
-						jPtr = new PbsJobHandler(jId, this.name);
-					} else {
-						jPtr = (PbsJobHandler)this.jobs.get(jId);
-					}
-				} finally {
-					this.jobMapReadLock.unlock();
-				}
+				jPtr = (PbsJobHandler)this.getJob(jId);
+				if(jPtr == null) jPtr = new PbsJobHandler(jId, this.name);
 			} else {
 				rawJobData.add(jobs);
 			}
 		}
 		if(rawJobData.size() > 0 && jPtr != null) {
-			this.jobMapWriteLock.lock();
-			try {
-				this.jobs.put(jPtr.getId(), jPtr);
-			} finally {
-				this.jobMapWriteLock.unlock();
-			}
+			this.addJob(jPtr);
 			PbsUpdater updateThread = new PbsUpdater((IPbsObject)jPtr);
 			updateThread.setRawData(rawJobData);
 			updateThread.run();
