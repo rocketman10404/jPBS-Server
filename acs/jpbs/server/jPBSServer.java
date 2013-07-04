@@ -28,11 +28,10 @@ public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterfa
 	private static final long serialVersionUID = 7037513788004765212L;
 	public static PbsServerHandler pbsServer = null;
 	public final static String serviceName = "jPBS-Server";
-	public final static int servicePort = 31122;
-	public List<jPBSClientInterface> clients = new LinkedList<jPBSClientInterface>();
-	private transient final ReentrantReadWriteLock clientsLock = new ReentrantReadWriteLock(true);
-	protected transient final Lock clientsReadLock = clientsLock.readLock();
-	protected transient final Lock clientsWriteLock = clientsLock.writeLock();
+	public static List<jPBSClientInterface> clients = new LinkedList<jPBSClientInterface>();
+	private static transient final ReentrantReadWriteLock clientsLock = new ReentrantReadWriteLock(true);
+	protected static transient final Lock clientsReadLock = clientsLock.readLock();
+	protected static transient final Lock clientsWriteLock = clientsLock.writeLock();
 	
 	public jPBSServer() throws RemoteException {
 		super();
@@ -43,6 +42,20 @@ public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterfa
 		pbsServer = PbsServerHandler.getInstance();
 		// Update server in the background
 		PbsUpdateManager.beginUpdate((PbsServerHandler)pbsServer);
+	}
+	
+	public void deregister(jPBSClientInterface client) throws RemoteException {
+		clientsWriteLock.lock();
+		try {
+			if(clients.contains(client)) {
+				clients.remove(client);
+				Logger.logInfo("Client disconnected: "+clients.size()+" client(s) total.");
+			} else {
+				Logger.logError("Invalid client disconnection attempt.");
+			}
+		} finally {
+			clientsWriteLock.unlock();
+		}
 	}
 		
 	public PbsServer getServerObject() throws RemoteException { return pbsServer.getServer(); }
@@ -58,8 +71,8 @@ public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterfa
 	public void register(jPBSClientInterface newClient) throws RemoteException {
 		clientsWriteLock.lock();
 		try {
-			this.clients.add(newClient);
-			Logger.logInfo("New client connected: "+this.clients.size()+" client(s) total.");
+			clients.add(newClient);
+			Logger.logInfo("New client connected: "+clients.size()+" client(s) total.");
 		} finally {
 			clientsWriteLock.unlock();
 		}
