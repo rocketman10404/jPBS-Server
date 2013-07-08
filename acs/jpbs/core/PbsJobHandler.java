@@ -33,33 +33,52 @@ public class PbsJobHandler implements IPbsObject {
 		return this.ref;
 	}
 	
-	public void parseRawData(List<String> rawData) {
-		if(rawData == null || rawData.isEmpty()) return;
+	public static PbsJob parseRawData(List<String> rawData) {
+		if(rawData == null || rawData.isEmpty()) return null;
+		
+		String header = rawData.get(0);
+		if(!header.startsWith("Job Id: ")) return null;
+		int jId = Utils.parseId(header.substring(8));
+		PbsJob jTemp = new PbsJob(jId, "");
+		
 		String[] rawArr;
-		List<String[]> rawResourceList = new ArrayList<String[]>();
+		List<String[]> rawResourceList = new ArrayList<String[]>(50);
 		
 		for(String rawLine : rawData) {
 			rawArr = rawLine.split("=");
 			if(rawArr.length != 2) continue;
 			rawArr[0] = rawArr[0].trim();
 			
-			if(rawArr[0].equals("Job_Name")) this.ref.jobName = rawArr[1].trim();
-			else if(rawArr[0].equals("Job_Owner")) this.ref.jobOwner = rawArr[1].trim();
-			else if(rawArr[0].equals("job_state")) this.ref.state = PbsJobState.getStateByChar(rawArr[1].trim().charAt(0));
-			else if(rawArr[0].equals("Error_Path")) this.ref.errorPath = Utils.constructURI(rawArr[1].trim());
-			else if(rawArr[0].equals("Output_Path")) this.ref.outputPath = Utils.constructURI(rawArr[1].trim());
-			else if(rawArr[0].equals("ctime")) this.ref.ctime = Utils.dateHelper(rawArr[1].trim());
-			else if(rawArr[0].equals("Priority")) this.ref.priority = Integer.parseInt(rawArr[1].trim());
-			else if(rawArr[0].equals("qtime")) this.ref.qtime = Utils.dateHelper(rawArr[1].trim());
-			else if(rawArr[0].equals("comment")) this.ref.comment = rawArr[1].trim();
+			if(rawArr[0].equals("Job_Name")) jTemp.jobName = rawArr[1].trim();
+			else if(rawArr[0].equals("Job_Owner")) jTemp.jobOwner = rawArr[1].trim();
+			else if(rawArr[0].equals("job_state")) jTemp.state = PbsJobState.getStateByChar(rawArr[1].trim().charAt(0));
+			else if(rawArr[0].equals("queue")) jTemp.queueKey = rawArr[1].trim();
+			else if(rawArr[0].equals("Error_Path")) jTemp.errorPath = Utils.constructURI(rawArr[1].trim());
+			else if(rawArr[0].equals("Output_Path")) jTemp.outputPath = Utils.constructURI(rawArr[1].trim());
+			else if(rawArr[0].equals("ctime")) jTemp.ctime = Utils.dateHelper(rawArr[1].trim());
+			else if(rawArr[0].equals("Priority")) jTemp.priority = Integer.parseInt(rawArr[1].trim());
+			else if(rawArr[0].equals("qtime")) jTemp.qtime = Utils.dateHelper(rawArr[1].trim());
+			else if(rawArr[0].equals("comment")) jTemp.comment = rawArr[1].trim();
 			else if(rawArr[0].startsWith("Resource_List")) rawResourceList.add(rawArr);
 		}
 		
-		this.ref.resourceList = PbsResource.processResource(rawResourceList);
+		jTemp.resourceList = PbsResource.processResource(rawResourceList);
+		PbsQueue qPtr = PbsServer.getInstance().getQueueSafe(jTemp.queueKey);
+		PbsJob jPtr;
+		jPtr = qPtr.getJob(jId);
+		if(jPtr == null) {
+			jPtr = jTemp;
+			qPtr.addJob(jPtr);
+			System.out.println("Job "+jId+" created.");
+		} else {
+			jPtr.makeCopy(jTemp);
+			System.out.println("Job "+jId+" copied.");
+		}
+		return jPtr;
 	}
 	
 	public void updateSelf() {
-		this.parseRawData(PbsEnvironment.retrieveQstatOutput(new String[]{"-f ",Integer.toString(this.ref.id)}));
+		parseRawData(PbsEnvironment.retrieveQstatOutput(new String[]{"-f ",Integer.toString(this.ref.id)}));
 	}
 	
 	public void updateChildren(List<String> rawData) { return ; }

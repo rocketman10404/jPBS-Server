@@ -26,6 +26,7 @@ import acs.jpbs.utils.Logger;
 public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterface {
 
 	private static final long serialVersionUID = 7037513788004765212L;
+	public static String pbsHost = "hn1.integrisgp.local";
 	public static PbsServerHandler pbsServer = null;
 	public final static String serviceName = "jPBS-Server";
 	public static List<jPBSClientInterface> clients = new LinkedList<jPBSClientInterface>();
@@ -41,7 +42,7 @@ public class jPBSServer extends UnicastRemoteObject implements jPBSServerInterfa
 		} else Logger.logError("Failed to load environment info");
 		pbsServer = PbsServerHandler.getInstance();
 		// Update server in the background
-		PbsUpdateManager.beginUpdate((PbsServerHandler)pbsServer);
+		PbsUpdateManager.beginFullUpdate();
 	}
 	
 	public void deregister(jPBSClientInterface client) throws RemoteException {

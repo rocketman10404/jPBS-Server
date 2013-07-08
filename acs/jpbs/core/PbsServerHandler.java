@@ -9,6 +9,7 @@ import acs.jpbs.attrib.PbsStateCount;
 import acs.jpbs.core.PbsQueueHandler;
 import acs.jpbs.core.PbsServer;
 import acs.jpbs.enums.PbsServerState;
+import acs.jpbs.server.jPBSServer;
 import acs.jpbs.serverUtils.PbsEnvironment;
 import acs.jpbs.serverUtils.PbsUpdater;
 
@@ -23,7 +24,7 @@ public class PbsServerHandler implements IPbsObject {
 	
 	public void getChildren() {
 		// get queue list output, pass to update children
-		this.updateChildren(PbsEnvironment.retrieveQmgrOutput(new String[]{"list queue @hn1"}));
+		this.updateChildren(PbsEnvironment.retrieveQmgrOutput(new String[]{"list queue @"+jPBSServer.pbsHost}));
 	}
 	
 	public PbsJob[] getJobArray() {
@@ -45,7 +46,7 @@ public class PbsServerHandler implements IPbsObject {
 		return instance;
 	}
 		
-	public void parseRawData(List<String> rawData) {
+	public static void parseRawData(List<String> rawData) {
 		String[] rawArr;
 		List<String[]> rawResourcesAssigned = new ArrayList<String[]>();
 		List<String[]> rawDefaultChunk = new ArrayList<String[]>();
@@ -74,7 +75,7 @@ public class PbsServerHandler implements IPbsObject {
 	}
 	
 	public void updateSelf() {
-		this.parseRawData(PbsEnvironment.retrieveQmgrOutput(new String[]{"list server"}));
+		parseRawData(PbsEnvironment.retrieveQmgrOutput(new String[]{"list server "+jPBSServer.pbsHost}));
 	}
 	
 	public void updateChildren(List<String> rawData) { 
@@ -87,7 +88,7 @@ public class PbsServerHandler implements IPbsObject {
 				// If previous queue data exists, initiate updater for queue object, pass and clear temp data
 				if(rawQueueData.size() > 0 && qPtr != null) {
 					ref.addQueue(qPtr.getQueue());
-					PbsUpdater updateThread = new PbsUpdater((IPbsObject)qPtr, PbsUpdater.Method.UPDATE_ALL);
+					PbsUpdater updateThread = new PbsUpdater((IPbsObject)qPtr, PbsUpdater.Method.UPDATE_SELF_AND_CHILDREN);
 					updateThread.setRawData(rawQueueData);
 					updateThread.run();
 					rawQueueData = new ArrayList<String>();
@@ -100,7 +101,7 @@ public class PbsServerHandler implements IPbsObject {
 		}
 		if(rawQueueData.size() > 0 && qPtr != null) {
 			ref.addQueue(qPtr.getQueue());
-			PbsUpdater updateThread = new PbsUpdater((IPbsObject)qPtr, PbsUpdater.Method.UPDATE_ALL);
+			PbsUpdater updateThread = new PbsUpdater((IPbsObject)qPtr, PbsUpdater.Method.UPDATE_SELF_AND_CHILDREN);
 			updateThread.setRawData(rawQueueData);
 			updateThread.run();
 		}

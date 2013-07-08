@@ -28,8 +28,19 @@ public class PbsQueueHandler implements IPbsObject {
 		return this.ref;
 	}
 		
-	public void parseRawData(List<String> rawData) {
-		if(rawData == null || rawData.isEmpty()) return;
+	public static PbsQueue parseRawData(List<String> rawData) {
+		if(rawData == null || rawData.isEmpty()) return null;
+		
+		String header = rawData.get(0);
+		if(!header.startsWith("Queue ")) return null;
+		PbsQueue qPtr;
+		String qName = header.substring(6).trim();
+		qPtr = PbsServer.getInstance().getQueue(qName);
+		if(qPtr == null) {
+			qPtr = new PbsQueue(qName, PbsServer.getInstance());
+			PbsServer.getInstance().addQueue(qPtr);
+		}
+		
 		String[] rawArr;
 		List<String[]> rawResourcesAssigned = new ArrayList<String[]>();
 		List<String[]> rawDefaultChunk = new ArrayList<String[]>();
@@ -39,25 +50,26 @@ public class PbsQueueHandler implements IPbsObject {
 			if(rawArr.length != 2) continue;
 			rawArr[0] = rawArr[0].trim();
 			
-			if(rawArr[0].equals("queue_type")) this.ref.type = PbsQueueType.parseQueueType(rawArr[1].trim());
-			else if(rawArr[0].equals("state_count")) this.ref.stateCount = PbsStateCount.parseStateCount(rawArr[1].trim());
-			else if(rawArr[0].equals("enabled")) this.ref.enabled = Boolean.parseBoolean(rawArr[1].trim());
-			else if(rawArr[0].equals("started")) this.ref.started = Boolean.parseBoolean(rawArr[1].trim());
+			if(rawArr[0].equals("queue_type")) qPtr.type = PbsQueueType.parseQueueType(rawArr[1].trim());
+			else if(rawArr[0].equals("state_count")) qPtr.stateCount = PbsStateCount.parseStateCount(rawArr[1].trim());
+			else if(rawArr[0].equals("enabled")) qPtr.enabled = Boolean.parseBoolean(rawArr[1].trim());
+			else if(rawArr[0].equals("started")) qPtr.started = Boolean.parseBoolean(rawArr[1].trim());
 			else if(rawArr[0].startsWith("default_chunk")) rawDefaultChunk.add(rawArr);
 			else if(rawArr[0].startsWith("resources_assigned")) rawResourcesAssigned.add(rawArr);
 		}
 		
-		this.ref.defaultChunk = PbsResource.processResource(rawDefaultChunk);
-		this.ref.resourcesAssigned = PbsResource.processResource(rawResourcesAssigned);
+		qPtr.defaultChunk = PbsResource.processResource(rawDefaultChunk);
+		qPtr.resourcesAssigned = PbsResource.processResource(rawResourcesAssigned);
+		return qPtr;
 	}
 
 	public void updateSelf() {
-		this.parseRawData(PbsEnvironment.retrieveQmgrOutput(new String[]{"list queue "+this.ref.name}));
+		parseRawData(PbsEnvironment.retrieveQmgrOutput(new String[]{"list queue "+this.ref.name}));
 	}
 	
 	public void updateChildren(List<String> rawData) {
 		// search through data for jobs, spawn updater threads for each
-		List<String> rawJobData = new ArrayList<String>();
+		List<String> rawJobData = new ArrayList<String>(50);
 		PbsJobHandler jPtr = null;
 		for(String jobs : rawData) {
 			// If new job data found

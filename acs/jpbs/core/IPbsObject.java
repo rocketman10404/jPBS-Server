@@ -6,7 +6,7 @@ public interface IPbsObject {
 	
 	void getChildren();
 
-	void parseRawData(List<String> rawData);
+	//abstract IPbsObject parseRawData(List<String> rawData);
 	
 	void updateSelf();
 	
